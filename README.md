@@ -1,5 +1,7 @@
 # gpt-image2-serial
 
+[English](./README.en.md)
+
 这是一个面向 Codex、Claude Code 以及其他支持 `SKILL.md` 约定的 Agent 的可移植技能包，用来通过 OpenAI-compatible images API 稳定地串行生成 GPT Image 2 图片。
 
 ## 它解决什么问题
