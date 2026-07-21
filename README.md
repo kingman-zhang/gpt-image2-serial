@@ -21,6 +21,26 @@ npx skills add kingman-zhang/gpt-image2-serial
 
 GitHub 仓库地址：`kingman-zhang/gpt-image2-serial`
 
+让 Codex 帮你安装：
+
+把下面这段 prompt 直接发给 Codex：
+
+```text
+请帮我安装这个 skill：kingman-zhang/gpt-image2-serial。
+如果当前环境支持通用 skills installer，就直接安装；
+否则请把仓库中的 skills/gpt-image2-serial 复制到我的 Codex skills 目录。
+安装完成后，再检查它是否已经可用。
+```
+
+让 Claude Code 或其他 Agent 帮你安装：
+
+```text
+请帮我从 GitHub 仓库 kingman-zhang/gpt-image2-serial 安装这个 skill。
+如果当前环境支持通用 skills installer，就直接安装；
+否则请把仓库中的 skills/gpt-image2-serial 复制到当前 Agent 的 skills 目录。
+安装完成后，请再验证这个 skill 是否已经可用。
+```
+
 手动安装到 Codex：
 
 ```bash

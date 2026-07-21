@@ -21,6 +21,26 @@ npx skills add kingman-zhang/gpt-image2-serial
 
 GitHub repository: `kingman-zhang/gpt-image2-serial`
 
+Ask Codex to install it for you:
+
+Send this prompt to Codex:
+
+```text
+Please install this skill for me: kingman-zhang/gpt-image2-serial.
+If a common skills installer is available in this environment, use it.
+Otherwise, copy the repository's skills/gpt-image2-serial into my Codex
+skills directory. After installation, verify that the skill is available.
+```
+
+Ask Claude Code or another agent to install it:
+
+```text
+Please install the skill from the GitHub repository kingman-zhang/gpt-image2-serial.
+If a common skills installer is available in this environment, use it.
+Otherwise, copy skills/gpt-image2-serial into the current agent's skills
+directory. After installation, verify that the skill is available.
+```
+
 Manual install for Codex:
 
 ```bash
