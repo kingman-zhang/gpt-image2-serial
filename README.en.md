@@ -11,44 +11,65 @@ A portable skill package for Codex, Claude Code, and other agents that support t
 - Safe API key and base URL handling through environment variables or `.env.image`
 - A portable skill package under `skills/gpt-image2-serial` for common agent skill directories
 
-## Install
+## Quick Install
 
-Install with a common skills installer:
+### Use a skills installer
+
+If Node.js is available, run:
 
 ```bash
 npx skills add kingman-zhang/gpt-image2-serial
 ```
 
-GitHub repository: `kingman-zhang/gpt-image2-serial`
+Project: [https://github.com/kingman-zhang/gpt-image2-serial](https://github.com/kingman-zhang/gpt-image2-serial)
 
-Ask Codex to install it for you:
+### Ask Codex to install it
 
 Send this prompt to Codex:
 
 ```text
-Please install this skill for me: kingman-zhang/gpt-image2-serial.
-If a common skills installer is available in this environment, use it.
-Otherwise, copy the repository's skills/gpt-image2-serial into my Codex
-skills directory. After installation, verify that the skill is available.
+Please install the skill from this GitHub repository:
+https://github.com/kingman-zhang/gpt-image2-serial
+
+The skill is located at skills/gpt-image2-serial within the repository.
+Use an available skills installer if possible. Otherwise, install that
+directory into my Codex skills directory. After installation, check that
+SKILL.md exists and that Codex can discover gpt-image2-serial. Tell me if
+Codex must be restarted to load it.
 ```
 
-Ask Claude Code or another agent to install it:
+The full URL identifies GitHub as the source, while the explicit subdirectory prevents the agent from treating the whole repository as one skill.
+
+### Ask Claude Code or another agent to install it
 
 ```text
-Please install the skill from the GitHub repository kingman-zhang/gpt-image2-serial.
-If a common skills installer is available in this environment, use it.
-Otherwise, copy skills/gpt-image2-serial into the current agent's skills
-directory. After installation, verify that the skill is available.
+Please install the skill from this GitHub repository:
+https://github.com/kingman-zhang/gpt-image2-serial
+
+The skill is located at skills/gpt-image2-serial within the repository.
+Use an available skills installer if possible. Otherwise, install that
+directory into the current agent's skills directory. After installation,
+check that SKILL.md exists and that the agent can discover
+gpt-image2-serial. Tell me if the agent must be restarted to load it.
 ```
 
-Manual install for Codex:
+### Manual installation
+
+Clone the repository first:
+
+```bash
+git clone https://github.com/kingman-zhang/gpt-image2-serial.git
+cd gpt-image2-serial
+```
+
+Install for Codex:
 
 ```bash
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
 cp -R skills/gpt-image2-serial "${CODEX_HOME:-$HOME/.codex}/skills/"
 ```
 
-Manual install for Claude Code:
+Install for Claude Code:
 
 ```bash
 mkdir -p "$HOME/.claude/skills"

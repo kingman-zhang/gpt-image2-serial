@@ -11,44 +11,65 @@
 - 通过环境变量或 `.env.image` 管理 API key 和 base URL
 - 技能主体放在 `skills/gpt-image2-serial`，方便直接安装到常见 Agent 技能目录
 
-## 安装方式
+## 快速安装
 
-使用通用 skills installer 一键安装：
+### 使用 skills installer
+
+如果本机有 Node.js，可以直接运行：
 
 ```bash
 npx skills add kingman-zhang/gpt-image2-serial
 ```
 
-GitHub 仓库地址：`kingman-zhang/gpt-image2-serial`
+项目地址：[https://github.com/kingman-zhang/gpt-image2-serial](https://github.com/kingman-zhang/gpt-image2-serial)
 
-让 Codex 帮你安装：
+### 让 Codex 自动安装
 
-把下面这段 prompt 直接发给 Codex：
-
-```text
-请帮我安装这个 skill：kingman-zhang/gpt-image2-serial。
-如果当前环境支持通用 skills installer，就直接安装；
-否则请把仓库中的 skills/gpt-image2-serial 复制到我的 Codex skills 目录。
-安装完成后，再检查它是否已经可用。
-```
-
-让 Claude Code 或其他 Agent 帮你安装：
+把下面的提示词直接发给 Codex：
 
 ```text
-请帮我从 GitHub 仓库 kingman-zhang/gpt-image2-serial 安装这个 skill。
-如果当前环境支持通用 skills installer，就直接安装；
-否则请把仓库中的 skills/gpt-image2-serial 复制到当前 Agent 的 skills 目录。
-安装完成后，请再验证这个 skill 是否已经可用。
+请帮我从这个 GitHub 仓库安装 skill：
+https://github.com/kingman-zhang/gpt-image2-serial
+
+要安装的 skill 位于仓库中的 skills/gpt-image2-serial。
+请优先使用当前环境可用的 skills installer；如果没有 installer，
+就将该目录安装到我的 Codex skills 目录。
+安装完成后，请检查 SKILL.md 是否存在，并确认 Codex 能发现
+gpt-image2-serial。若需要重启 Codex 才能加载，也请告诉我。
 ```
 
-手动安装到 Codex：
+这里同时给出完整 GitHub 地址和仓库内的 skill 路径，Agent 不需要猜测项目来自哪个平台，也不会误把整个仓库当作一个 skill。
+
+### 让 Claude Code 或其他 Agent 自动安装
+
+```text
+请帮我从这个 GitHub 仓库安装 skill：
+https://github.com/kingman-zhang/gpt-image2-serial
+
+要安装的 skill 位于仓库中的 skills/gpt-image2-serial。
+请优先使用当前环境可用的 skills installer；如果没有 installer，
+就将该目录安装到当前 Agent 的 skills 目录。
+安装完成后，请检查 SKILL.md 是否存在，并确认当前 Agent 能发现
+gpt-image2-serial。若需要重启 Agent 才能加载，也请告诉我。
+```
+
+### 手动安装
+
+先克隆仓库：
+
+```bash
+git clone https://github.com/kingman-zhang/gpt-image2-serial.git
+cd gpt-image2-serial
+```
+
+安装到 Codex：
 
 ```bash
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
 cp -R skills/gpt-image2-serial "${CODEX_HOME:-$HOME/.codex}/skills/"
 ```
 
-手动安装到 Claude Code：
+安装到 Claude Code：
 
 ```bash
 mkdir -p "$HOME/.claude/skills"
