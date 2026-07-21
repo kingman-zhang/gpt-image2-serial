@@ -82,7 +82,7 @@ cp -R skills/gpt-image2-serial "$HOME/.claude/skills/"
 
 ## 运行要求
 
-- Python 3
+- Python 3.10 或更高版本
 - 能访问 OpenAI-compatible images endpoint 的网络环境
 - 一个具备图片生成权限的 API key
 
@@ -107,7 +107,7 @@ cp -R skills/gpt-image2-serial "$HOME/.claude/skills/"
 配置成功后，请继续我原来的图片生成任务。
 ```
 
-Agent 会启动向导。输入 API key 时屏幕不会显示内容；Base URL 直接回车会使用 `https://api.openai.com/v1`。
+如果当前 Agent 提供你可以直接操作的交互终端，它会启动向导；否则会给出一条完整命令，请在你自己的终端中运行。输入 API key 时屏幕不会显示内容；Base URL 直接回车会使用 `https://api.openai.com/v1`。
 
 ### 在终端手动配置
 

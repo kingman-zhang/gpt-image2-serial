@@ -47,20 +47,22 @@ class ConfigureTests(unittest.TestCase):
         )
         self.assertNotIn("wizard-secret", stdout.getvalue() + stderr.getvalue())
 
-    def test_wizard_rejects_empty_key_without_writing(self):
-        stderr = io.StringIO()
+    def test_wizard_reprompts_after_empty_key(self):
+        secrets = iter(("", "wizard-secret"))
 
         status = configure.run(
             home=self.home,
             input_fn=lambda prompt: "",
-            secret_fn=lambda prompt: "",
+            secret_fn=lambda prompt: next(secrets),
             stdout=io.StringIO(),
-            stderr=stderr,
+            stderr=io.StringIO(),
         )
 
-        self.assertNotEqual(status, 0)
-        self.assertIn("empty", stderr.getvalue().lower())
-        self.assertFalse(self.path.exists())
+        self.assertEqual(status, 0)
+        self.assertIn(
+            "OPENAI_IMAGE_API_KEY=wizard-secret",
+            self.path.read_text(encoding="utf-8"),
+        )
 
     def test_wizard_rejects_invalid_base_url_without_writing(self):
         stderr = io.StringIO()
@@ -98,12 +100,14 @@ class ConfigureTests(unittest.TestCase):
         self.path.write_bytes(b"original")
         answers = iter(("yes", "https://replacement.test/v1"))
 
+        stdout = io.StringIO()
+        stderr = io.StringIO()
         status = configure.run(
             home=self.home,
             input_fn=lambda prompt: next(answers),
             secret_fn=lambda prompt: "replacement-secret",
-            stdout=io.StringIO(),
-            stderr=io.StringIO(),
+            stdout=stdout,
+            stderr=stderr,
         )
 
         self.assertEqual(status, 0)
@@ -111,6 +115,7 @@ class ConfigureTests(unittest.TestCase):
             "OPENAI_IMAGE_API_KEY=replacement-secret",
             self.path.read_text(encoding="utf-8"),
         )
+        self.assertNotIn("replacement-secret", stdout.getvalue() + stderr.getvalue())
 
     def test_non_interactive_terminal_fails_without_prompting(self):
         env = os.environ.copy()
@@ -126,6 +131,8 @@ class ConfigureTests(unittest.TestCase):
 
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("interactive terminal", result.stderr.lower())
+        self.assertIn("python3", result.stderr)
+        self.assertIn(str(SCRIPT_DIR / "configure.py"), result.stderr)
         self.assertFalse(self.path.exists())
 
 

@@ -118,13 +118,14 @@ test_fallback_env_vars() {
 }
 
 test_dotenv_is_not_sourced_as_shell_code() {
-  make_fixture
+  make_fixture 0
   trap cleanup_fixture RETURN
   cat > "${PROJECT_DIR}/.env.image" <<'EOF'
 OPENAI_IMAGE_API_KEY=$(touch SHOULD_NOT_EXIST)
 EOF
   run_wrapper bash "${WRAPPER}" --out "${PROJECT_DIR}/out.png" --prompt "hello"
-  [[ ${STATUS} -eq 0 ]] || fail "wrapper should delegate dotenv parsing to Python"
+  [[ ${STATUS} -ne 0 ]] || fail "unsafe dotenv should be rejected"
+  assert_contains "${STDERR}" "unsafe"
   [[ ! -e "${PROJECT_DIR}/SHOULD_NOT_EXIST" ]] || fail "wrapper executed dotenv shell content"
   trap - RETURN
   cleanup_fixture

@@ -3,6 +3,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 SCRIPT_DIR = (
@@ -76,6 +77,13 @@ class ConfigTests(unittest.TestCase):
                 with self.assertRaisesRegex(config.ConfigError, "unsafe"):
                     config.read_dotenv(path)
 
+    def test_read_dotenv_wraps_invalid_utf8(self):
+        path = self.project / ".env.image"
+        path.write_bytes(b"OPENAI_IMAGE_API_KEY=\xff\n")
+
+        with self.assertRaisesRegex(config.ConfigError, "cannot read"):
+            config.read_dotenv(path)
+
     def test_environment_fields_override_project_and_user_independently(self):
         self.write_config(
             config.user_config_path(self.home),
@@ -130,6 +138,24 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(resolved.api_key, "fallback-key")
         self.assertEqual(resolved.base_url, "https://fallback.test/v1")
 
+    def test_complete_environment_ignores_malformed_lower_priority_files(self):
+        (self.project / ".env.image").write_text("OTHER_KEY=bad\n", encoding="utf-8")
+        user_path = config.user_config_path(self.home)
+        user_path.parent.mkdir(parents=True)
+        user_path.write_text("OTHER_KEY=bad\n", encoding="utf-8")
+
+        resolved = config.resolve_config(
+            environ={
+                "OPENAI_IMAGE_API_KEY": "environment-key",
+                "OPENAI_IMAGE_BASE_URL": "https://environment.test/v1",
+            },
+            project_dir=self.project,
+            home=self.home,
+        )
+
+        self.assertEqual(resolved.api_key, "environment-key")
+        self.assertEqual(resolved.base_url, "https://environment.test/v1")
+
     def test_default_base_url_is_used_without_configuration(self):
         resolved = config.resolve_config(
             environ={},
@@ -141,7 +167,14 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(resolved.base_url, "https://api.openai.com/v1")
 
     def test_validate_base_url_rejects_non_http_urls(self):
-        for value in ("ftp://example.test", "example.test/v1", "https:///v1"):
+        for value in (
+            "ftp://example.test",
+            "example.test/v1",
+            "https:///v1",
+            "https://user@",
+            "https://example.test:invalid",
+            "https://example.test/\x00",
+        ):
             with self.subTest(value=value):
                 with self.assertRaises(config.ConfigError):
                     config.validate_base_url(value)
@@ -170,6 +203,35 @@ class ConfigTests(unittest.TestCase):
             )
 
         self.assertFalse(path.exists())
+
+    def test_secure_write_rejects_values_the_parser_would_reject(self):
+        path = config.user_config_path(self.home)
+
+        for api_key in ("sk-$(literal)", "sk-`literal`", "sk-${literal}"):
+            with self.subTest(api_key=api_key):
+                with self.assertRaisesRegex(config.ConfigError, "unsafe"):
+                    config.write_user_config(path, api_key, "https://example.test/v1")
+
+        self.assertFalse(path.exists())
+
+    def test_secure_write_wraps_directory_creation_errors(self):
+        blocker = self.root / "not-a-directory"
+        blocker.write_text("block", encoding="utf-8")
+
+        with self.assertRaisesRegex(config.ConfigError, "cannot write"):
+            config.write_user_config(
+                blocker / "env",
+                "secret-key",
+                "https://example.test/v1",
+            )
+
+    def test_secure_write_does_not_chmod_after_publishing(self):
+        path = config.user_config_path(self.home)
+
+        with mock.patch.object(config.os, "chmod") as chmod:
+            config.write_user_config(path, "secret-key", "https://example.test/v1")
+
+        chmod.assert_not_called()
 
 
 if __name__ == "__main__":

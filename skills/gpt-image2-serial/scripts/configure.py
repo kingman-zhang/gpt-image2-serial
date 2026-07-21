@@ -32,10 +32,11 @@ def run(
             print("Configuration was not changed.", file=stdout)
             return 0
 
-    api_key = secret_fn("OpenAI-compatible image API key (input hidden): ")
-    if not api_key:
-        print("API key cannot be empty.", file=stderr)
-        return 1
+    api_key = ""
+    while not api_key:
+        api_key = secret_fn("OpenAI-compatible image API key (input hidden): ")
+        if not api_key:
+            print("API key cannot be empty. Please try again.", file=stderr)
 
     base_url_input = input_fn(f"Base URL [{DEFAULT_BASE_URL}]: ").strip()
     try:
@@ -52,8 +53,10 @@ def run(
 
 def main() -> int:
     if not sys.stdin.isatty():
+        command = f"python3 {Path(__file__).resolve()}"
         print(
-            "An interactive terminal is required so the API key can be entered securely.",
+            "An interactive terminal is required so the API key can be entered securely.\n"
+            f"Run this command in your terminal: {command}",
             file=sys.stderr,
         )
         return 1

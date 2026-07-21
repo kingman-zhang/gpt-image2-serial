@@ -83,7 +83,7 @@ cp -R skills/gpt-image2-serial "$HOME/.claude/skills/"
 
 ## Requirements
 
-- Python 3
+- Python 3.10 or later
 - Network access to an OpenAI-compatible images endpoint
 - An API key with image generation permission
 
@@ -108,7 +108,7 @@ in the terminal. Do not ask me to paste the API key into chat.
 After configuration succeeds, continue my original image generation task.
 ```
 
-The key is hidden while you type it. Press Enter at the Base URL prompt to use `https://api.openai.com/v1`.
+If the agent provides a terminal you can operate directly, it starts the wizard. Otherwise, it gives you a complete command to run in your own terminal. The key is hidden while you type it. Press Enter at the Base URL prompt to use `https://api.openai.com/v1`.
 
 ### Configure it manually in a terminal
 
