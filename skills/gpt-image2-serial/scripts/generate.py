@@ -13,8 +13,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-
-DEFAULT_BASE_URL = "https://api.openai.com/v1"
+from config import ConfigError, resolve_config, user_config_path
 
 
 def build_generation_url(base_url: str) -> str:
@@ -105,17 +104,23 @@ def main(argv: list[str] | None = None) -> int:
     if destination.exists():
         return fail(f"Refusing to overwrite existing output: {destination} already exists.")
 
-    api_key = os.environ.get("OPENAI_IMAGE_API_KEY") or os.environ.get("OPENAI_API_KEY")
-    if not api_key:
+    try:
+        image_config = resolve_config(project_dir=Path.cwd())
+    except ConfigError as exc:
+        return fail(f"Invalid image API configuration: {exc}")
+
+    if not image_config.api_key:
+        config_path = user_config_path().expanduser()
+        configure_script = Path(__file__).with_name("configure.py")
         return fail(
-            "Missing API key. Set OPENAI_IMAGE_API_KEY or OPENAI_API_KEY before generating."
+            "Missing image API key.\n"
+            f"User configuration: {config_path}\n"
+            f"Run this setup wizard in an interactive terminal: python3 {configure_script}\n"
+            "Do not paste your API key into chat."
         )
 
-    base_url = (
-        os.environ.get("OPENAI_IMAGE_BASE_URL")
-        or os.environ.get("OPENAI_BASE_URL")
-        or DEFAULT_BASE_URL
-    )
+    api_key = image_config.api_key
+    base_url = image_config.base_url
     payload = {
         "model": args.model,
         "prompt": args.prompt,

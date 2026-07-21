@@ -113,7 +113,7 @@ class GenerateScriptTests(unittest.TestCase):
         self.addCleanup(self.tempdir.cleanup)
         self.output_path = Path(self.tempdir.name) / "out.png"
 
-    def run_script(self, extra_args=None, env=None):
+    def run_script(self, extra_args=None, env=None, include_default_config=True):
         args = [
             "python3",
             str(SCRIPT),
@@ -133,8 +133,18 @@ class GenerateScriptTests(unittest.TestCase):
         if extra_args:
             args.extend(extra_args)
         merged_env = os.environ.copy()
+        for name in (
+            "OPENAI_IMAGE_API_KEY",
+            "OPENAI_IMAGE_BASE_URL",
+            "OPENAI_API_KEY",
+            "OPENAI_BASE_URL",
+        ):
+            merged_env.pop(name, None)
+        home = Path(self.tempdir.name) / "home"
+        home.mkdir(exist_ok=True)
         merged_env.update(
             {
+                "HOME": str(home),
                 "OPENAI_IMAGE_API_KEY": "test-secret",
                 "OPENAI_IMAGE_BASE_URL": self.base_url,
                 "NO_PROXY": "127.0.0.1,localhost",
@@ -145,6 +155,9 @@ class GenerateScriptTests(unittest.TestCase):
                 "https_proxy": "",
                 }
         )
+        if not include_default_config:
+            merged_env.pop("OPENAI_IMAGE_API_KEY")
+            merged_env.pop("OPENAI_IMAGE_BASE_URL")
         if env:
             merged_env.update(env)
         return subprocess.run(args, capture_output=True, text=True, env=merged_env)
@@ -188,6 +201,30 @@ class GenerateScriptTests(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(FixtureHandler.records[0]["path"], "/v1/images/generations")
+
+    def test_user_config_is_loaded_when_environment_is_empty(self):
+        home = Path(self.tempdir.name) / "home"
+        config_path = home / ".config" / "gpt-image2-serial" / "env"
+        config_path.parent.mkdir(parents=True)
+        config_path.write_text(
+            "OPENAI_IMAGE_API_KEY=user-secret\n"
+            f"OPENAI_IMAGE_BASE_URL={self.base_url}\n",
+            encoding="utf-8",
+        )
+
+        result = self.run_script(include_default_config=False)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(FixtureHandler.records[0]["authorization"], "Bearer user-secret")
+
+    def test_missing_config_points_to_safe_wizard(self):
+        result = self.run_script(include_default_config=False)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("configure.py", result.stderr)
+        self.assertIn(".config/gpt-image2-serial/env", result.stderr)
+        self.assertIn("do not paste", result.stderr.lower())
+        self.assertEqual(FixtureHandler.records, [])
 
     def test_existing_output_is_rejected(self):
         self.output_path.write_bytes(b"existing")
