@@ -8,7 +8,7 @@ A portable skill package for Codex, Claude Code, and other agents that support t
 
 - Strict single-image generation to avoid concurrency issues
 - A standalone Python client with no third-party dependencies
-- Safe API key and base URL handling through environment variables or `.env.image`
+- A secure wizard for user-level API configuration, plus environment and project overrides
 - A portable skill package under `skills/gpt-image2-serial` for common agent skill directories
 
 ## Quick Install
@@ -35,7 +35,9 @@ The skill is located at skills/gpt-image2-serial within the repository.
 Use an available skills installer if possible. Otherwise, install that
 directory into my Codex skills directory. After installation, check that
 SKILL.md exists and that Codex can discover gpt-image2-serial. Tell me if
-Codex must be restarted to load it.
+Codex must be restarted to load it. Then check whether the image API is
+configured. If it is not, start the skill's secure setup wizard and let me
+enter the key privately in the terminal. Do not ask me to paste it into chat.
 ```
 
 The full URL identifies GitHub as the source, while the explicit subdirectory prevents the agent from treating the whole repository as one skill.
@@ -50,7 +52,10 @@ The skill is located at skills/gpt-image2-serial within the repository.
 Use an available skills installer if possible. Otherwise, install that
 directory into the current agent's skills directory. After installation,
 check that SKILL.md exists and that the agent can discover
-gpt-image2-serial. Tell me if the agent must be restarted to load it.
+gpt-image2-serial. Tell me if the agent must be restarted to load it. Then
+check whether the image API is configured. If it is not, start the skill's
+secure setup wizard and let me enter the key privately in the terminal. Do
+not ask me to paste it into chat.
 ```
 
 ### Manual installation
@@ -82,31 +87,78 @@ cp -R skills/gpt-image2-serial "$HOME/.claude/skills/"
 - Network access to an OpenAI-compatible images endpoint
 - An API key with image generation permission
 
-## Configure API Key and URL
+## Configure the Image API
 
-Preferred environment variables:
+The recommended method is the skill's secure setup wizard. It saves configuration to:
+
+```text
+~/.config/gpt-image2-serial/env
+```
+
+`~` is your user home directory. Configure it once and use the skill from any project. The file is created with mode `0600`, so only your user can read or write it.
+
+### Ask an agent to configure it
+
+Send this prompt to Codex, Claude Code, or another agent:
+
+```text
+Please start the secure setup wizard for gpt-image2-serial.
+Show me the full configuration path and let me enter the API key privately
+in the terminal. Do not ask me to paste the API key into chat.
+After configuration succeeds, continue my original image generation task.
+```
+
+The key is hidden while you type it. Press Enter at the Base URL prompt to use `https://api.openai.com/v1`.
+
+### Configure it manually in a terminal
+
+Codex:
+
+```bash
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/gpt-image2-serial/scripts/configure.py"
+```
+
+Claude Code:
+
+```bash
+python3 "$HOME/.claude/skills/gpt-image2-serial/scripts/configure.py"
+```
+
+The wizard displays the full destination path before asking for input. Run the same command again to update the configuration; it asks before replacing an existing file.
+
+To remove the configuration:
+
+```bash
+rm "$HOME/.config/gpt-image2-serial/env"
+```
+
+Never paste a real API key into prompts, command arguments, screenshots, or logs.
+
+### Advanced configuration
+
+Environment variables remain supported and have the highest priority:
+
+Preferred variables:
 
 ```bash
 export OPENAI_IMAGE_API_KEY="your-key"
 export OPENAI_IMAGE_BASE_URL="https://api.openai.com/v1"   # optional
 ```
 
-Compatibility fallback variables:
+Compatibility variables:
 
 ```bash
 export OPENAI_API_KEY="your-key"
 export OPENAI_BASE_URL="https://api.openai.com/v1"   # optional
 ```
 
-If you prefer project-local configuration:
+If you cloned this repository and need a per-project override, run this from the repository root:
 
 ```bash
 cp .env.image.example .env.image
 ```
 
-Then fill in `.env.image` with your own values.
-
-Never commit `.env.image`, never paste real secrets into prompts, and never hard-code credentials into the skill.
+The project-level `.env.image` overrides user-level configuration but not environment variables. Never commit `.env.image`.
 
 ## Usage
 
@@ -127,6 +179,8 @@ skills/gpt-image2-serial/
 ├── SKILL.md
 ├── agents/openai.yaml
 └── scripts/
+    ├── config.py
+    ├── configure.py
     ├── generate.py
     └── gpt-image2-serial-generate.sh
 ```
