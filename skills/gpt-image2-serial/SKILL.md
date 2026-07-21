@@ -1,25 +1,25 @@
 ---
 name: gpt-image2-serial
-description: Use this when generating GPT Image 2 or other OpenAI-compatible images reliably through a portable local skill, especially when concurrency limits or fragile environments require strict one-at-a-time execution.
+description: 用于稳定串行生成 GPT Image 2 或 OpenAI-compatible images；当需要 one-at-a-time execution、避免 concurrency limits、通过本地 portable skill 可靠出图时使用。
 ---
 
 # gpt-image2-serial
 
-Use this skill when an agent needs reliable, serial image generation through an OpenAI-compatible images API.
+当 Agent 需要通过 OpenAI-compatible images API 稳定、串行地生成图片时，使用这个 skill。
 
-## Rules
+## 规则
 
-- Generate exactly one image at a time. Wait until the command exits before starting another.
-- Use the bundled wrapper `scripts/gpt-image2-serial-generate.sh`.
-- Keep outputs inside the active workspace unless the user explicitly chooses another path.
-- Never overwrite an existing output file unless the user clearly asked for replacement.
-- Do not display API key values in messages, logs, or screenshots.
+- 一次只生成一张图，当前命令没有结束前，不要启动下一张。
+- 使用 skill 自带的包装脚本 `scripts/gpt-image2-serial-generate.sh`。
+- 输出文件默认放在当前工作区内，除非用户明确指定别的位置。
+- 不要隐式覆盖已经存在的输出文件，除非用户明确要求替换。
+- 不要在消息、日志或截图里暴露 API key 的实际值。
 
-## Quick Workflow
+## 快速工作流
 
-1. Check whether `OPENAI_IMAGE_API_KEY` or `OPENAI_API_KEY` is configured, without echoing the value.
-2. If neither key exists, ask the user to export a key or create a project-local `.env.image`.
-3. Run exactly one command with the bundled wrapper:
+1. 先检查 `OPENAI_IMAGE_API_KEY` 或 `OPENAI_API_KEY` 是否已配置，但不要回显具体值。
+2. 如果两个 key 都不存在，提示用户导出环境变量，或者创建项目级 `.env.image`。
+3. 使用自带脚本执行单次生成：
 
 ```bash
 ./skills/gpt-image2-serial/scripts/gpt-image2-serial-generate.sh \
@@ -29,28 +29,28 @@ Use this skill when an agent needs reliable, serial image generation through an 
   --prompt "..."
 ```
 
-4. Wait for completion before issuing another generation.
-5. Verify the output file exists and is the expected image.
+4. 等待命令执行完成，再开始下一次生成。
+5. 检查输出文件是否存在，并确认它就是预期图片。
 
-## Configuration
+## 配置约定
 
-- Preferred API key variable: `OPENAI_IMAGE_API_KEY`
-- Fallback API key variable: `OPENAI_API_KEY`
-- Preferred base URL variable: `OPENAI_IMAGE_BASE_URL`
-- Fallback base URL variable: `OPENAI_BASE_URL`
-- Default base URL: `https://api.openai.com/v1`
-- Optional project-local config file: `.env.image`
+- 首选 API key 变量：`OPENAI_IMAGE_API_KEY`
+- 兼容回退 API key 变量：`OPENAI_API_KEY`
+- 首选 base URL 变量：`OPENAI_IMAGE_BASE_URL`
+- 兼容回退 base URL 变量：`OPENAI_BASE_URL`
+- 默认 base URL：`https://api.openai.com/v1`
+- 可选项目级配置文件：`.env.image`
 
-## Failure Handling
+## 失败处理
 
-- `429` rate or concurrency limiting: wait for the prior request to finish, then retry the same single image serially.
-- TLS or proxy record-layer failures: report a likely network or proxy problem and ask before changing proxy behavior.
-- Missing key: tell the user to set `OPENAI_IMAGE_API_KEY` or create `.env.image`.
-- Existing output path: keep the existing file and choose a versioned filename instead of overwriting implicitly.
+- 遇到 `429` rate limit 或 concurrency limit：等待前一个请求完全结束，然后以串行方式重试同一张图。
+- 遇到 TLS 或 proxy record-layer 错误：告诉用户这大概率是网络或代理问题，在修改代理行为前先征求确认。
+- 缺少 key：提示用户设置 `OPENAI_IMAGE_API_KEY`，或者创建 `.env.image`。
+- 输出路径已存在：保留现有文件，改用版本化文件名，不要直接覆盖。
 
-## Prompt Guidance
+## Prompt 建议
 
-- Prefer one command per output image.
-- Use `1536x864` for wide covers and `1536x1152` for 4:3 layouts.
-- Use `medium` quality by default for a balance of speed and reliability.
-- If the final asset needs title text, prefer adding it later in layout tools instead of baking text into the generated image.
+- 一张输出图对应一条命令。
+- 横版封面优先使用 `1536x864`，4:3 布局优先使用 `1536x1152`。
+- 默认优先使用 `medium` 质量，兼顾速度和稳定性。
+- 如果最终图片还要加标题或排版文字，优先在后续设计工具里补，而不是直接把大量文字烘焙进生成图里。

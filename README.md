@@ -1,83 +1,83 @@
 # gpt-image2-serial
 
-Portable `SKILL.md` package for reliable GPT Image 2 generation through an OpenAI-compatible images API. It is designed for Codex, Claude Code, and similar agents that can install skills from a repository.
+这是一个面向 Codex、Claude Code 以及其他支持 `SKILL.md` 约定的 Agent 的可移植技能包，用来通过 OpenAI-compatible images API 稳定地串行生成 GPT Image 2 图片。
 
-## What This Gives You
+## 它解决什么问题
 
-- One-image-at-a-time generation to avoid concurrency surprises
-- A standalone Python client with no third-party dependencies
-- Safe handling of API keys through environment variables or `.env.image`
-- A portable skill package under `skills/gpt-image2-serial`
+- 严格一次只生成一张图，避免并发限制和多任务互相干扰
+- 自带独立 Python 客户端，不依赖第三方库
+- 通过环境变量或 `.env.image` 管理 API key 和 base URL
+- 技能主体放在 `skills/gpt-image2-serial`，方便直接安装到常见 Agent 技能目录
 
-## Install
+## 安装方式
 
-One-command install with a common skills installer:
+使用通用 skills installer 一键安装：
 
 ```bash
-npx skills add <github-owner>/gpt-image2-serial
+npx skills add kingman-zhang/gpt-image2-serial
 ```
 
-Replace `<github-owner>` after this repository is published.
+GitHub 仓库地址：`kingman-zhang/gpt-image2-serial`
 
-Manual install for Codex:
+手动安装到 Codex：
 
 ```bash
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
 cp -R skills/gpt-image2-serial "${CODEX_HOME:-$HOME/.codex}/skills/"
 ```
 
-Manual install for Claude Code:
+手动安装到 Claude Code：
 
 ```bash
 mkdir -p "$HOME/.claude/skills"
 cp -R skills/gpt-image2-serial "$HOME/.claude/skills/"
 ```
 
-## Requirements
+## 运行要求
 
 - Python 3
-- Network access to an OpenAI-compatible images endpoint
-- An API key with image generation permission
+- 能访问 OpenAI-compatible images endpoint 的网络环境
+- 一个具备图片生成权限的 API key
 
-## Configure Credentials
+## 配置 API Key 和 URL
 
-Preferred environment variables:
+推荐环境变量：
 
 ```bash
 export OPENAI_IMAGE_API_KEY="your-key"
-export OPENAI_IMAGE_BASE_URL="https://api.openai.com/v1"   # optional
+export OPENAI_IMAGE_BASE_URL="https://api.openai.com/v1"   # 可选
 ```
 
-Compatibility fallback variables:
+兼容回退变量：
 
 ```bash
 export OPENAI_API_KEY="your-key"
-export OPENAI_BASE_URL="https://api.openai.com/v1"   # optional
+export OPENAI_BASE_URL="https://api.openai.com/v1"   # 可选
 ```
 
-Project-local alternative:
+如果你希望按项目单独配置，也可以使用：
 
 ```bash
 cp .env.image.example .env.image
 ```
 
-Then fill in `.env.image` with your own values.
+然后在 `.env.image` 里填入你自己的值。
 
-Never commit `.env.image`, never paste real keys into prompts, and never hard-code secrets into the skill.
+不要提交 `.env.image`，不要把真实 key 粘贴进 prompt，也不要把密钥硬编码进 skill 或脚本。
 
-## Usage
+## 使用示例
 
 ```bash
 ./skills/gpt-image2-serial/scripts/gpt-image2-serial-generate.sh \
   --out assets/example.png \
   --size 1536x864 \
   --quality medium \
-  --prompt "A calm editorial cover image with soft natural light"
+  --prompt "一张柔和自然光的编辑风封面图"
 ```
 
-Agents can also invoke the skill explicitly with `$gpt-image2-serial`.
+也可以让 Agent 显式调用这个技能，例如在提示词里写 `$gpt-image2-serial`。
 
-## Repository Layout
+## 仓库结构
 
 ```text
 skills/gpt-image2-serial/

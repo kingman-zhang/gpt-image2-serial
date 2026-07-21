@@ -1,4 +1,4 @@
 interface:
-  display_name: "GPT Image 2 Serial"
-  short_description: "Generate GPT Image 2 assets one at a time"
-  default_prompt: "Use $gpt-image2-serial to generate one project image safely."
+  display_name: "GPT Image 2 串行出图"
+  short_description: "稳定地一次生成一张 GPT Image 2 图片"
+  default_prompt: "使用 $gpt-image2-serial 安全地生成一张项目图片。"
