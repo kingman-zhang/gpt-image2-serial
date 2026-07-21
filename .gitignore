@@ -1,0 +1,4 @@
+.DS_Store
+.env.image
+__pycache__/
+*.py[cod]

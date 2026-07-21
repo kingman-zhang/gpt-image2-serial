@@ -1,0 +1,4 @@
+interface:
+  display_name: "GPT Image 2 Serial"
+  short_description: "Generate GPT Image 2 assets one at a time"
+  default_prompt: "Use $gpt-image2-serial to generate one project image safely."
