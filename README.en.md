@@ -95,7 +95,7 @@ The recommended method is the skill's secure setup wizard. It saves configuratio
 ~/.config/gpt-image2-serial/env
 ```
 
-`~` is your user home directory. Configure it once and use the skill from any project. The file is created with mode `0600`, so only your user can read or write it.
+`~` is your user home directory. Configure it once and use the skill from any project. On macOS and Linux, the file is created with mode `0600`. On Windows, it inherits the access controls of the current user's configuration directory.
 
 ### Ask an agent to configure it
 

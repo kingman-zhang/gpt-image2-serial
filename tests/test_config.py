@@ -233,6 +233,19 @@ class ConfigTests(unittest.TestCase):
 
         chmod.assert_not_called()
 
+    def test_secure_write_falls_back_when_fchmod_is_unavailable(self):
+        path = config.user_config_path(self.home)
+
+        with mock.patch.object(config.os, "fchmod", new=None):
+            config.write_user_config(path, "secret-key", "https://example.test/v1")
+
+        self.assertTrue(path.is_file())
+        self.assertEqual(
+            path.read_text(encoding="utf-8"),
+            "OPENAI_IMAGE_API_KEY=secret-key\n"
+            "OPENAI_IMAGE_BASE_URL=https://example.test/v1\n",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

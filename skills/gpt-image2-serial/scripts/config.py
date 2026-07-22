@@ -143,7 +143,11 @@ def write_user_config(path: Path, api_key: str, base_url: str) -> None:
             delete=False,
         ) as handle:
             temp_path = Path(handle.name)
-            os.fchmod(handle.fileno(), 0o600)
+            fchmod = getattr(os, "fchmod", None)
+            if callable(fchmod):
+                fchmod(handle.fileno(), 0o600)
+            else:
+                os.chmod(temp_path, 0o600)
             handle.write(content)
         os.replace(temp_path, path)
     except OSError as exc:

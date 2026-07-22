@@ -38,7 +38,7 @@ OPENAI_IMAGE_API_KEY=...
 OPENAI_IMAGE_BASE_URL=https://api.openai.com/v1
 ```
 
-配置目录不存在时自动创建。配置文件写入后设置为 `0600`，只允许当前用户读写。
+配置目录不存在时自动创建。在 macOS 和 Linux 上，配置文件写入后设置为 `0600`；在 Windows 上，配置文件继承当前用户配置目录的访问控制权限。
 
 ## 配置优先级
 
