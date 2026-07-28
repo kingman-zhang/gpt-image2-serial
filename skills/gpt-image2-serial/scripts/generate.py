@@ -25,7 +25,31 @@ def fail(message: str) -> int:
     return 1
 
 
-def request_json(url: str, api_key: str, payload: dict[str, object]) -> dict[str, object]:
+def create_ssl_context() -> ssl.SSLContext:
+    verify_paths = ssl.get_default_verify_paths()
+    has_explicit_trust = bool(
+        os.environ.get("SSL_CERT_FILE") or os.environ.get("SSL_CERT_DIR")
+    )
+    has_default_trust = bool(verify_paths.cafile or verify_paths.capath)
+    macos_cafile = Path("/etc/ssl/cert.pem")
+
+    if (
+        sys.platform == "darwin"
+        and not has_explicit_trust
+        and not has_default_trust
+        and macos_cafile.is_file()
+    ):
+        return ssl.create_default_context(cafile=str(macos_cafile))
+
+    return ssl.create_default_context()
+
+
+def request_json(
+    url: str,
+    api_key: str,
+    payload: dict[str, object],
+    ssl_context: ssl.SSLContext,
+) -> dict[str, object]:
     request = urllib.request.Request(
         url,
         data=json.dumps(payload).encode("utf-8"),
@@ -35,7 +59,7 @@ def request_json(url: str, api_key: str, payload: dict[str, object]) -> dict[str
         },
         method="POST",
     )
-    with urllib.request.urlopen(request) as response:
+    with urllib.request.urlopen(request, context=ssl_context) as response:
         raw = response.read()
     try:
         return json.loads(raw.decode("utf-8"))
@@ -43,13 +67,13 @@ def request_json(url: str, api_key: str, payload: dict[str, object]) -> dict[str
         raise ValueError("The image API returned invalid JSON.") from exc
 
 
-def download_image(url: str) -> bytes:
+def download_image(url: str, ssl_context: ssl.SSLContext) -> bytes:
     request = urllib.request.Request(url, method="GET")
-    with urllib.request.urlopen(request) as response:
+    with urllib.request.urlopen(request, context=ssl_context) as response:
         return response.read()
 
 
-def extract_image(response: dict[str, object]) -> bytes:
+def extract_image(response: dict[str, object], ssl_context: ssl.SSLContext) -> bytes:
     data = response.get("data")
     if not isinstance(data, list) or not data:
         raise ValueError("The image API response did not include image data.")
@@ -67,7 +91,7 @@ def extract_image(response: dict[str, object]) -> bytes:
 
     url = first.get("url")
     if isinstance(url, str) and url:
-        return download_image(url)
+        return download_image(url, ssl_context)
 
     raise ValueError("The image API response did not include image data.")
 
@@ -131,8 +155,11 @@ def main(argv: list[str] | None = None) -> int:
     }
 
     try:
-        response = request_json(build_generation_url(base_url), api_key, payload)
-        image_bytes = extract_image(response)
+        ssl_context = create_ssl_context()
+        response = request_json(
+            build_generation_url(base_url), api_key, payload, ssl_context
+        )
+        image_bytes = extract_image(response, ssl_context)
         atomic_write(destination, image_bytes)
         print(destination)
         return 0

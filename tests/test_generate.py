@@ -1,17 +1,135 @@
 import base64
 import http.server
+import importlib.util
 import json
 import os
 import socket
 import subprocess
+import sys
 import tempfile
 import threading
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest import mock
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = REPO_ROOT / "skills" / "gpt-image2-serial" / "scripts" / "generate.py"
+SCRIPTS_DIR = SCRIPT.parent
+sys.path.insert(0, str(SCRIPTS_DIR))
+SPEC = importlib.util.spec_from_file_location("gpt_image2_serial_generate", SCRIPT)
+GENERATE = importlib.util.module_from_spec(SPEC)
+assert SPEC.loader is not None
+SPEC.loader.exec_module(GENERATE)
+
+
+class SSLContextTests(unittest.TestCase):
+    def test_macos_uses_system_cafile_when_python_has_no_trust_source(self):
+        verify_paths = SimpleNamespace(cafile=None, capath=None)
+        expected_context = object()
+
+        with (
+            mock.patch.object(GENERATE.sys, "platform", "darwin"),
+            mock.patch.dict(GENERATE.os.environ, {}, clear=True),
+            mock.patch.object(
+                GENERATE.ssl, "get_default_verify_paths", return_value=verify_paths
+            ),
+            mock.patch.object(GENERATE.Path, "is_file", return_value=True),
+            mock.patch.object(
+                GENERATE.ssl,
+                "create_default_context",
+                return_value=expected_context,
+            ) as create_default_context,
+        ):
+            context = GENERATE.create_ssl_context()
+
+        self.assertIs(context, expected_context)
+        create_default_context.assert_called_once_with(cafile="/etc/ssl/cert.pem")
+
+    def test_explicit_ssl_cert_file_preserves_python_behavior(self):
+        verify_paths = SimpleNamespace(cafile=None, capath=None)
+
+        with (
+            mock.patch.object(GENERATE.sys, "platform", "darwin"),
+            mock.patch.dict(
+                GENERATE.os.environ,
+                {"SSL_CERT_FILE": "/custom/ca.pem"},
+                clear=True,
+            ),
+            mock.patch.object(
+                GENERATE.ssl, "get_default_verify_paths", return_value=verify_paths
+            ),
+            mock.patch.object(GENERATE.Path, "is_file", return_value=True),
+            mock.patch.object(GENERATE.ssl, "create_default_context") as create_context,
+        ):
+            GENERATE.create_ssl_context()
+
+        create_context.assert_called_once_with()
+
+    def test_existing_python_trust_source_preserves_python_behavior(self):
+        verify_paths = SimpleNamespace(cafile="/python/ca.pem", capath=None)
+
+        with (
+            mock.patch.object(GENERATE.sys, "platform", "darwin"),
+            mock.patch.dict(GENERATE.os.environ, {}, clear=True),
+            mock.patch.object(
+                GENERATE.ssl, "get_default_verify_paths", return_value=verify_paths
+            ),
+            mock.patch.object(GENERATE.Path, "is_file", return_value=True),
+            mock.patch.object(GENERATE.ssl, "create_default_context") as create_context,
+        ):
+            GENERATE.create_ssl_context()
+
+        create_context.assert_called_once_with()
+
+    def test_non_macos_does_not_use_macos_system_cafile(self):
+        verify_paths = SimpleNamespace(cafile=None, capath=None)
+
+        with (
+            mock.patch.object(GENERATE.sys, "platform", "linux"),
+            mock.patch.dict(GENERATE.os.environ, {}, clear=True),
+            mock.patch.object(
+                GENERATE.ssl, "get_default_verify_paths", return_value=verify_paths
+            ),
+            mock.patch.object(GENERATE.Path, "is_file", return_value=True),
+            mock.patch.object(GENERATE.ssl, "create_default_context") as create_context,
+        ):
+            GENERATE.create_ssl_context()
+
+        create_context.assert_called_once_with()
+
+    def test_request_json_uses_provided_ssl_context(self):
+        ssl_context = object()
+        response = mock.MagicMock()
+        response.read.return_value = b'{"data": []}'
+        response.__enter__.return_value = response
+
+        with mock.patch.object(
+            GENERATE.urllib.request, "urlopen", return_value=response
+        ) as urlopen:
+            GENERATE.request_json(
+                "https://example.com/v1/images/generations",
+                "secret",
+                {"prompt": "test"},
+                ssl_context,
+            )
+
+        self.assertIs(urlopen.call_args.kwargs["context"], ssl_context)
+
+    def test_download_image_uses_provided_ssl_context(self):
+        ssl_context = object()
+        response = mock.MagicMock()
+        response.read.return_value = b"image"
+        response.__enter__.return_value = response
+
+        with mock.patch.object(
+            GENERATE.urllib.request, "urlopen", return_value=response
+        ) as urlopen:
+            content = GENERATE.download_image("https://example.com/image.png", ssl_context)
+
+        self.assertEqual(content, b"image")
+        self.assertIs(urlopen.call_args.kwargs["context"], ssl_context)
 
 
 class FixtureHandler(http.server.BaseHTTPRequestHandler):
